@@ -312,10 +312,12 @@ function renderDay(){
   const total=items.reduce((s,i)=>s+i.ms,0);
   const byVal={alto:0,urgente:0,bajo:0,"":0}, byCat={};
   items.forEach(i=>{byVal[i.value]+=i.ms; byCat[i.cat]=(byCat[i.cat]||0)+i.ms;});
-  let html='<div class="tiles">'+
+  const pct=v=>total?Math.round(byVal[v]/total*100):0;
+  let html='<div class="tiles tiles-2">'+
     '<div class="tile"><div class="k">Total del día</div><div class="v num">'+fmtDur(total)+'</div></div>'+
-    '<div class="tile"><div class="k">Importante</div><div class="v num" style="color:var(--good)">'+(total?Math.round(byVal.alto/total*100):0)+'%</div></div>'+
-    '<div class="tile"><div class="k">Prescindible</div><div class="v num" style="color:var(--bad)">'+(total?Math.round(byVal.bajo/total*100):0)+'%</div></div>'+
+    '<div class="tile"><div class="k">Neutro</div><div class="v num" style="color:var(--muted)">'+pct("")+'%</div><div class="k num">'+fmtDur(byVal[""])+'</div></div>'+
+    '<div class="tile"><div class="k">Importante</div><div class="v num" style="color:var(--good)">'+pct("alto")+'%</div><div class="k num">'+fmtDur(byVal.alto)+'</div></div>'+
+    '<div class="tile"><div class="k">Prescindible</div><div class="v num" style="color:var(--bad)">'+pct("bajo")+'%</div><div class="k num">'+fmtDur(byVal.bajo)+'</div></div>'+
   '</div>';
   if(!items.length){
     html+='<div class="empty">'+(dayCursor===todayStr()?"Aún no hay nada hoy. Toca una categoría de arriba para sumar 15 minutos.":"No hay nada registrado este día. Puedes añadirlo ahora tocando las categorías de arriba.")+'</div>';
