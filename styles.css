@@ -158,7 +158,7 @@ dialog::backdrop{background:rgba(10,12,20,.45)}
 .pill.neutro{color:var(--muted);background:var(--bg)}
 .vtag{font-weight:600}
 .vtag.alto{color:var(--good)} .vtag.urgente{color:var(--warn)} .vtag.bajo{color:var(--bad)} .vtag.neutro{color:var(--muted)}
-.counter .big{font-size:36px;color:var(--accent)}
+.counter .big{font-size:36px}
 .catedit{grid-template-areas:"c n v d"}
 .catedit input[type=color]{grid-area:c}.catedit input[type=text]{grid-area:n}.catedit .vselect{grid-area:v}.catedit .btn{grid-area:d}
 @media (max-width:520px){.catedit{grid-template-columns:40px 1fr auto;grid-template-areas:"c n d" ". v v";row-gap:6px}.catedit .vselect{width:100%}}
