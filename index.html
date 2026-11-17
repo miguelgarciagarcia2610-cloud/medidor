@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Medidor de tiempo</title>
+<meta name="theme-color" content="#2f4bd8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Medidor">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Pantalla de acceso -->
+<div class="wrap auth hidden" id="auth">
+  <h1>Medidor de tiempo</h1>
+  <p>Entra con tu email para ver tus datos en el móvil y en el ordenador.</p>
+  <form class="form" id="auth-form">
+    <label for="a-email">Email<input type="email" id="a-email" autocomplete="email" required></label>
+    <label for="a-pass">Contraseña<input type="password" id="a-pass" autocomplete="current-password" minlength="6" required></label>
+    <p class="err" id="a-err"></p>
+    <div class="row">
+      <button type="submit" class="btn primary" id="a-login">Entrar</button>
+      <button type="button" class="btn" id="a-signup">Crear cuenta</button>
+    </div>
+  </form>
+</div>
+
+<!-- App -->
+<div class="wrap hidden" id="app">
+  <header class="top">
+    <h1>Medidor de tiempo</h1>
+    <span class="status sync" id="status">Cargando…</span>
+  </header>
+
+  <section class="now" id="now" aria-live="polite"></section>
+
+  <section class="reg">
+    <div class="nav">
+      <button class="btn small" id="d-prev" aria-label="Día anterior">←</button>
+      <strong id="d-label"></strong>
+      <button class="btn small" id="d-next" aria-label="Día siguiente">→</button>
+    </div>
+    <div class="counter" aria-live="polite"><span class="big num" id="c-units">0</span><span class="lbl" id="c-lbl">unidades · 0 min</span></div>
+    <div class="vsel"><span>Valor de lo que añades:</span><div class="chips" id="vsel" role="group" aria-label="Valor de las unidades que añades"></div></div>
+    <div class="cats" id="cats"></div>
+    <p class="hint">Cada toque en una categoría suma una unidad de 15 minutos al día elegido. Con «− 1» la quitas. Con «Crono» mides en tiempo real y, al pararlo, se suma a esa categoría.</p>
+  </section>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-hoy" aria-selected="true" data-tab="hoy">Día</button>
+    <button class="tab" role="tab" id="tab-semana" aria-selected="false" data-tab="semana">Semana</button>
+    <button class="tab" role="tab" id="tab-ajustes" aria-selected="false" data-tab="ajustes">Ajustes</button>
+  </nav>
+
+  <section class="panel" id="p-hoy"></section>
+  <section class="panel" id="p-semana" hidden></section>
+  <section class="panel" id="p-ajustes" hidden></section>
+</div>
+
+<dialog id="dlg">
+  <form class="form" id="dlg-form" method="dialog">
+    <h2>Editar bloque de cronómetro</h2>
+    <label for="f-cat">Categoría<select id="f-cat"></select></label>
+    <label for="f-date">Fecha<input type="date" id="f-date" required></label>
+    <div class="two">
+      <label for="f-start">Inicio<input type="time" id="f-start" required></label>
+      <label for="f-end">Fin<input type="time" id="f-end" required></label>
+    </div>
+    <label for="f-value">Valor
+      <select id="f-value">
+        <option value="">Sin marcar</option>
+        <option value="alto">Importante</option>
+        <option value="urgente">Urgente</option>
+        <option value="bajo">Prescindible</option>
+      </select>
+    </label>
+    <label for="f-note">Nota<input type="text" id="f-note" maxlength="140" placeholder="Opcional"></label>
+    <p class="err" id="f-err"></p>
+    <div class="row" style="justify-content:space-between">
+      <button type="button" class="btn danger" id="f-del">Borrar bloque</button>
+      <div class="row">
+        <button type="button" class="btn" id="f-cancel">Cancelar</button>
+        <button type="submit" class="btn primary">Guardar</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<script src="config.js"></script>
+<script src="vendor/supabase.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
