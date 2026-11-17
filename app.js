@@ -312,11 +312,12 @@ function renderDay(){
   const total=items.reduce((s,i)=>s+i.ms,0);
   const byVal={alto:0,urgente:0,bajo:0,"":0}, byCat={};
   items.forEach(i=>{byVal[i.value]+=i.ms; byCat[i.cat]=(byCat[i.cat]||0)+i.ms;});
+  byVal.prod=byVal.alto+byVal.urgente; // Productivo = Importante + Urgente
   const pct=v=>total?Math.round(byVal[v]/total*100):0;
   let html='<div class="tiles tiles-2">'+
     '<div class="tile"><div class="k">Total del día</div><div class="v num">'+fmtDur(total)+'</div></div>'+
     '<div class="tile"><div class="k">Neutro</div><div class="v num" style="color:var(--muted)">'+pct("")+'%</div><div class="k num">'+fmtDur(byVal[""])+'</div></div>'+
-    '<div class="tile"><div class="k">Importante</div><div class="v num" style="color:var(--good)">'+pct("alto")+'%</div><div class="k num">'+fmtDur(byVal.alto)+'</div></div>'+
+    '<div class="tile"><div class="k">Productivo</div><div class="v num" style="color:var(--good)">'+pct("prod")+'%</div><div class="k num">'+fmtDur(byVal.prod)+'</div></div>'+
     '<div class="tile"><div class="k">Prescindible</div><div class="v num" style="color:var(--bad)">'+pct("bajo")+'%</div><div class="k num">'+fmtDur(byVal.bajo)+'</div></div>'+
   '</div>';
   if(!items.length){
@@ -363,9 +364,9 @@ function renderWeek(){
   const demo = Object.keys(days).length===0;
   const items = demo ? exampleWeek(ws) : itemsBetween(ws,we);
   const total=items.reduce((s,i)=>s+i.ms,0);
-  const byCat={}, byVal={alto:0,urgente:0,bajo:0,"":0}, byDay=Array.from({length:7},()=>({}));
+  const byCat={}, byVal={alto:0,urgente:0,bajo:0,"":0,prod:0}, byDay=Array.from({length:7},()=>({}));
   items.forEach(i=>{
-    byCat[i.cat]=(byCat[i.cat]||0)+i.ms; byVal[i.value]+=i.ms;
+    byCat[i.cat]=(byCat[i.cat]||0)+i.ms; byVal[i.value]+=i.ms; byVal.prod=(byVal.prod||0)+((i.value==="alto"||i.value==="urgente")?i.ms:0);
     const di=Math.round((parseDate(i.date)-parseDate(ws))/86400000);
     if(di>=0&&di<7) byDay[di][i.cat]=(byDay[di][i.cat]||0)+i.ms;
   });
@@ -380,7 +381,7 @@ function renderWeek(){
   html+='<div class="tiles">'+
     '<div class="tile"><div class="k">Total registrado</div><div class="v num">'+fmtHours(total)+'</div></div>'+
     '<div class="tile"><div class="k">Unidades de 15 min</div><div class="v num">'+fmtUnits(total)+'</div></div>'+
-    '<div class="tile"><div class="k">Importante</div><div class="v num" style="color:var(--good)">'+Math.round(byVal.alto/total*100)+'%</div></div>'+
+    '<div class="tile"><div class="k">Productivo</div><div class="v num" style="color:var(--good)">'+Math.round(byVal.prod/total*100)+'%</div></div>'+
     '<div class="tile"><div class="k">Prescindible</div><div class="v num" style="color:var(--bad)">'+Math.round(byVal.bajo/total*100)+'%</div></div>'+
   '</div>';
   const top=catById(cats[0]); const ins=[];
@@ -394,10 +395,11 @@ function renderWeek(){
     const c=catById(id), ms=byCat[id];
     return '<div class="bar-row"><span>'+esc(c.name)+'</span><div class="bar-track"><div class="bar-fill" style="width:'+(ms/maxCat*100).toFixed(1)+'%;background:'+esc(c.color)+'"></div></div><span class="bar-val">'+fmtHours(ms)+' · '+Math.round(ms/total*100)+'%</span></div>';
   }).join("")+'</div></div>';
-  const vorder=["alto","urgente","","bajo"];
+  const vorder=["prod","","bajo"];
+  const VNAME={prod:"Productivo","":"Neutro",bajo:"Prescindible"}, VCOL={prod:"var(--good)","":"var(--none)",bajo:"var(--bad)"};
   html+='<div class="card"><h2 style="margin-bottom:12px">Por valor</h2><div class="stack" role="img" aria-label="Reparto del tiempo por valor">'+
-    vorder.filter(v=>byVal[v]>0).map(v=>'<div title="'+VALUES[v]+': '+fmtHours(byVal[v])+'" style="width:'+(byVal[v]/total*100).toFixed(2)+'%;background:'+VALUE_VARS[v]+'"></div>').join("")+
-    '</div><div class="legend" style="margin-top:10px">'+vorder.map(v=>'<span style="--sw:'+VALUE_VARS[v]+'">'+VALUES[v]+' · <span class="num">'+fmtHours(byVal[v])+'</span></span>').join("")+'</div></div>';
+    vorder.filter(v=>byVal[v]>0).map(v=>'<div title="'+VNAME[v]+': '+fmtHours(byVal[v])+'" style="width:'+(byVal[v]/total*100).toFixed(2)+'%;background:'+VCOL[v]+'"></div>').join("")+
+    '</div><div class="legend" style="margin-top:10px">'+vorder.map(v=>'<span style="--sw:'+VCOL[v]+'">'+VNAME[v]+' · <span class="num">'+fmtHours(byVal[v])+' · '+Math.round(byVal[v]/total*100)+'%</span></span>').join("")+'</div></div>';
   const dayTotals=byDay.map(d=>Object.values(d).reduce((a,b)=>a+b,0));
   const maxH=Math.max(1,Math.ceil(Math.max(...dayTotals)/3600000));
   html+='<div class="card"><h2 style="margin-bottom:12px">Por día</h2><div class="days">'+
