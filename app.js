@@ -1,18 +1,18 @@
 (function(){
 "use strict";
 const UNIT = 15*60000; // unidad base: 15 minutos
-const VALUES = {alto:"Importante", urgente:"Urgente", bajo:"Prescindible", "":"Sin marcar"};
+const VALUES = {alto:"Importante", urgente:"Urgente", bajo:"Prescindible", "":"Neutro"};
 const VALUE_VARS = {alto:"var(--good)", urgente:"var(--warn)", bajo:"var(--bad)", "":"var(--none)"};
 const DEFAULT_CATS = [
-  {id:"c-violin", name:"Violín", color:"#2f4bd8"},
-  {id:"c-formacion", name:"Formación", color:"#1f9e8f"},
-  {id:"c-redes-util", name:"Redes útil", color:"#0f7cbd"},
-  {id:"c-reuniones", name:"Reuniones", color:"#8a4fd1"},
-  {id:"c-correo", name:"Correo y mensajes", color:"#d1781f"},
-  {id:"c-organizar", name:"Organizar", color:"#6b7a8f"},
-  {id:"c-distracciones", name:"Distracciones", color:"#d64561"},
-  {id:"c-descanso", name:"Descanso", color:"#4c9a2a"},
-  {id:"c-personal", name:"Personal", color:"#b58a1b"}
+  {id:"c-violin", value:"alto", name:"Violín", color:"#2f4bd8"},
+  {id:"c-formacion", value:"alto", name:"Formación", color:"#1f9e8f"},
+  {id:"c-redes-util", value:"alto", name:"Redes útil", color:"#0f7cbd"},
+  {id:"c-reuniones", value:"urgente", name:"Reuniones", color:"#8a4fd1"},
+  {id:"c-correo", value:"urgente", name:"Correo y mensajes", color:"#d1781f"},
+  {id:"c-organizar", value:"urgente", name:"Organizar", color:"#6b7a8f"},
+  {id:"c-distracciones", value:"bajo", name:"Distracciones", color:"#d64561"},
+  {id:"c-descanso", value:"", name:"Descanso", color:"#4c9a2a"},
+  {id:"c-personal", value:"", name:"Personal", color:"#b58a1b"}
 ];
 
 let settings = {categories: DEFAULT_CATS.map(c=>({...c})), running:null};
@@ -21,7 +21,6 @@ let mode = "local";     // "local" (solo este navegador) | "cloud" (Supabase)
 let dayCursor = todayStr();
 let weekCursor = weekStart(todayStr());
 let currentTab = "hoy";
-let addValue = "";      // valor que se aplica a las unidades que añades
 let popCat = null;
 
 /* ---------- fechas y formato ---------- */
@@ -51,6 +50,7 @@ function longDay(s){
 }
 function uid(){return Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4)}
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function catValue(id){ const c=settings.categories.find(c=>c.id===id); if(c && typeof c.value==="string") return c.value; const d=DEFAULT_CATS.find(c=>c.id===id); return d? d.value : ""; }
 function catById(id){return settings.categories.find(c=>c.id===id) || {id, name:"Categoría borrada", color:"#9aa1b2"}}
 
 /* ---------- guardado: copia local + Supabase ---------- */
@@ -176,7 +176,7 @@ function unitsOf(date, cat){
 }
 function addUnit(cat){
   if(dayCursor>todayStr()) return;
-  const d=dayDoc(dayCursor); const key=cat+"|"+addValue;
+  const d=dayDoc(dayCursor); const key=cat+"|";
   d.units[key]=(d.units[key]||0)+1;
   popCat=cat;
   saveDay(dayCursor, 700);
@@ -184,7 +184,7 @@ function addUnit(cat){
 }
 function removeUnit(cat){
   const d=days[dayCursor]; if(!d||!d.units) return;
-  let key = d.units[cat+"|"+addValue] ? cat+"|"+addValue : Object.keys(d.units).find(k=>k.split("|")[0]===cat && d.units[k]>0);
+  let key = d.units[cat+"|"] ? cat+"|" : Object.keys(d.units).find(k=>k.split("|")[0]===cat && d.units[k]>0);
   if(!key) return;
   d.units[key]--; if(d.units[key]<=0) delete d.units[key];
   saveDay(dayCursor, 700);
@@ -212,12 +212,12 @@ function findEntry(id){
 function finishRunning(end){
   const r=settings.running; if(!r) return;
   settings.running=null;
-  if(end-r.start>=30000) addEntry({id:uid(), cat:r.catId, value:r.value||"", note:r.note||"", start:r.start, end});
+  if(end-r.start>=30000) addEntry({id:uid(), cat:r.catId, note:r.note||"", start:r.start, end});
 }
 function toggleTimer(cat){
   const now=Date.now(); const r=settings.running;
   if(r && r.catId===cat) finishRunning(now);
-  else { if(r) finishRunning(now); settings.running={catId:cat, value:addValue, note:"", start:now}; }
+  else { if(r) finishRunning(now); settings.running={catId:cat, note:"", start:now}; }
   saveSettings(); renderAll();
 }
 
@@ -228,11 +228,11 @@ function itemsBetween(from, toExcl){
   for(const date in days){
     if(date<from||date>=toExcl) continue;
     const d=days[date];
-    for(const k in (d.units||{})){ const [cat,value]=k.split("|"); out.push({cat, value:value||"", ms:d.units[k]*UNIT, date, kind:"unit", n:d.units[k]}); }
-    (d.entries||[]).forEach(e=>out.push({cat:e.cat, value:e.value||"", ms:e.end-e.start, date, kind:"timer", e}));
+    for(const k in (d.units||{})){ const [cat,value]=k.split("|"); out.push({cat, value:catValue(cat), ms:d.units[k]*UNIT, date, kind:"unit", n:d.units[k]}); }
+    (d.entries||[]).forEach(e=>out.push({cat:e.cat, value:catValue(e.cat), ms:e.end-e.start, date, kind:"timer", e}));
   }
   const r=settings.running;
-  if(r){ const date=dateStr(new Date(r.start)); if(date>=from&&date<toExcl) out.push({cat:r.catId, value:r.value||"", ms:Date.now()-r.start, date, kind:"live"}); }
+  if(r){ const date=dateStr(new Date(r.start)); if(date>=from&&date<toExcl) out.push({cat:r.catId, value:catValue(r.catId), ms:Date.now()-r.start, date, kind:"live"}); }
   return out;
 }
 function catMsOn(date, cat){ return itemsBetween(date, addDays(date,1)).filter(i=>i.cat===cat).reduce((s,i)=>s+i.ms,0); }
@@ -243,7 +243,6 @@ function renderNow(){
   const r=settings.running;
   const focused=document.activeElement;
   if(r && focused && focused.id==="note" && el.dataset.start===String(r.start)){
-    el.querySelectorAll(".chip").forEach(b=>b.setAttribute("aria-pressed", String(r.value===b.dataset.value)));
     return;
   }
   el.dataset.start = r? String(r.start) : "";
@@ -257,13 +256,8 @@ function renderNow(){
   el.style.borderLeftColor=c.color;
   el.innerHTML =
     '<div class="now-row"><div><div class="now-label">Cronómetro · desde las '+hhmm(r.start)+'</div><div class="now-cat">'+esc(c.name)+'</div></div><div style="text-align:right"><div class="clock" id="clock">'+fmtClock(Date.now()-r.start)+'</div><div class="now-units num" id="clock-u">'+fmtUnits(Date.now()-r.start)+' unidades</div></div></div>'+
-    '<div class="now-row"><div class="chips" role="group" aria-label="Valor de esta actividad">'+
-      ["alto","urgente","bajo"].map(v=>'<button class="chip v-'+v+'" data-value="'+v+'" aria-pressed="'+(r.value===v)+'">'+VALUES[v]+'</button>').join("")+
-    '</div><button class="btn primary" id="stop">Parar</button></div>'+
+    '<div class="now-row"><span class="pill '+(catValue(r.catId)||"neutro")+'">'+VALUES[catValue(r.catId)]+'</span><button class="btn primary" id="stop">Parar</button></div>'+
     '<input class="note" id="note" type="text" maxlength="140" placeholder="Nota rápida (opcional)" value="'+esc(r.note)+'">';
-  el.querySelectorAll(".chip").forEach(b=>b.addEventListener("click",()=>{
-    const v=b.dataset.value; settings.running.value = settings.running.value===v ? "" : v; saveSettings(); renderNow();
-  }));
   document.getElementById("stop").addEventListener("click",()=>{finishRunning(Date.now()); saveSettings(); renderAll();});
   let t=null; const note=document.getElementById("note");
   note.addEventListener("input",()=>{ clearTimeout(t); t=setTimeout(()=>{ if(settings.running){settings.running.note=note.value; saveSettings();} },800); });
@@ -282,12 +276,9 @@ function renderReg(){
   document.getElementById("d-next").disabled=isToday;
   const items=itemsBetween(dayCursor, addDays(dayCursor,1));
   const total=items.reduce((s,i)=>s+i.ms,0);
-  document.getElementById("c-units").textContent=fmtUnits(total);
-  document.getElementById("c-lbl").textContent=(Math.abs(total/UNIT-1)<1e-9?"unidad":"unidades")+" · "+fmtDur(total)+(isToday?" hoy":"");
+  document.getElementById("c-units").textContent=fmtDur(total);
+  document.getElementById("c-lbl").textContent=fmtUnits(total)+(Math.abs(total/UNIT-1)<1e-9?" unidad":" unidades")+(isToday?" hoy":"");
 
-  document.getElementById("vsel").innerHTML=["","alto","urgente","bajo"].map(v=>
-    '<button class="chip v-'+(v||"none")+'" data-v="'+v+'" aria-pressed="'+(addValue===v)+'">'+VALUES[v]+'</button>').join("");
-  document.querySelectorAll("#vsel .chip").forEach(b=>b.onclick=()=>{addValue=b.dataset.v; renderReg();});
 
   const running = settings.running && settings.running.catId;
   const el=document.getElementById("cats");
@@ -298,7 +289,7 @@ function renderReg(){
     return '<div class="cat'+(ms>0?" has":"")+(isRun?" running":"")+'" style="--c:'+esc(c.color)+'">'+
       '<button class="cat-main" data-add="'+esc(c.id)+'" aria-label="Sumar 15 minutos a '+esc(c.name)+'">'+
         '<span style="min-width:0"><span class="cat-name"><span class="dot" style="background:'+esc(c.color)+'"></span><span class="cn">'+esc(c.name)+'</span></span>'+
-        '<span class="cat-sub num">'+(ms>0?fmtDur(ms):"Toca: +15 min")+'</span></span>'+
+        '<span class="cat-sub num">'+(ms>0?fmtDur(ms):"Toca: +15 min")+' · <span class="vtag '+(catValue(c.id)||"neutro")+'">'+VALUES[catValue(c.id)]+'</span></span></span>'+
         '<span class="count num'+(popCat===c.id?" pop":"")+'">'+fmtUnits(ms)+'</span>'+
       '</button>'+
       '<div class="cat-actions">'+
@@ -361,7 +352,7 @@ function exampleWeek(ws){
     [["c-personal",10,"alto"],["c-formacion",3,"alto"],["c-descanso",4,""]]
   ];
   const out=[];
-  plan.forEach((bl,i)=>bl.forEach(([cat,n,value])=>out.push({cat,value,ms:n*UNIT,date:addDays(ws,i),kind:"unit"})));
+  plan.forEach((bl,i)=>bl.forEach(([cat,n,value])=>out.push({cat,value:catValue(cat),ms:n*UNIT,date:addDays(ws,i),kind:"unit"})));
   return out;
 }
 function renderWeek(){
@@ -395,7 +386,6 @@ function renderWeek(){
   if(byVal.bajo>0) ins.push('Marcaste como prescindible <strong>'+fmtHours(byVal.bajo)+'</strong> ('+fmtUnits(byVal.bajo)+' unidades). Es el primer tiempo que puedes recuperar.');
   if(settings.categories.some(c=>c.id==="c-violin")){ const vi=byCat["c-violin"]||0; ins.push('Violín: <strong>'+fmtHours(vi)+'</strong> en la semana ('+fmtHours(vi/activeDays)+' de media por día registrado).'); }
   if(byCat["c-distracciones"]) ins.push('Distracciones: <strong>'+fmtHours(byCat["c-distracciones"])+'</strong> ('+fmtUnits(byCat["c-distracciones"])+' unidades).');
-  if(byVal[""]/total>0.4) ins.push('El '+Math.round(byVal[""]/total*100)+'% del tiempo está sin marcar. Si eliges un valor antes de sumar unidades, las conclusiones serán más útiles.');
   html+='<div class="card"><h2 style="margin-bottom:8px">Qué te dice esta semana</h2><ul class="insights">'+ins.map(i=>'<li>'+i+'</li>').join("")+'</ul></div>';
   const maxCat=byCat[cats[0]];
   html+='<div class="card"><h2 style="margin-bottom:12px">Por categoría</h2><div class="bars">'+cats.map(id=>{
@@ -428,10 +418,11 @@ let confirmWipe=false;
 function renderSettings(){
   const el=document.getElementById("p-ajustes");
   el.innerHTML =
-    '<div class="card" style="display:flex;flex-direction:column;gap:10px"><h2>Categorías</h2><p class="hint">Mejor pocas (6–9). Si tienes demasiadas, dejarás de apuntar.</p>'+
+    '<div class="card" style="display:flex;flex-direction:column;gap:10px"><h2>Categorías</h2><p class="hint">Cada categoría tiene su valor: Importante, Urgente, Prescindible o Neutro. Si cambias el valor de una categoría, se recalcula también todo lo que ya registraste en ella.</p>'+
     settings.categories.map((c,i)=>
       '<div class="catedit"><input type="color" id="cc-'+i+'" value="'+esc(c.color)+'" aria-label="Color de '+esc(c.name)+'">'+
       '<input type="text" id="cn-'+i+'" value="'+esc(c.name)+'" maxlength="40" aria-label="Nombre de la categoría">'+
+      '<select id="cv-'+i+'" class="vselect" aria-label="Valor de '+esc(c.name)+'">'+["alto","urgente","bajo",""].map(v=>'<option value="'+v+'"'+(catValue(c.id)===v?" selected":"")+'>'+VALUES[v]+'</option>').join("")+'</select>'+
       '<button class="btn small danger" data-del="'+i+'" '+(settings.categories.length<=1?"disabled":"")+'>Quitar</button></div>'
     ).join("")+
     '<div class="row"><button class="btn" id="cat-add">Añadir categoría</button></div>'+
@@ -446,6 +437,8 @@ function renderSettings(){
     const n=document.getElementById("cn-"+i), col=document.getElementById("cc-"+i);
     n.addEventListener("change",()=>{ const v=n.value.trim(); if(v){settings.categories[i].name=v; saveSettings(); renderNow(); renderReg();} else n.value=settings.categories[i].name; });
     col.addEventListener("change",()=>{ settings.categories[i].color=col.value; saveSettings(); renderNow(); renderReg(); });
+    const sel=document.getElementById("cv-"+i);
+    sel.addEventListener("change",()=>{ settings.categories[i].value=sel.value; saveSettings(); renderNow(); renderReg(); });
   });
   el.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{
     const i=+b.dataset.del; const c=settings.categories[i];
@@ -454,7 +447,7 @@ function renderSettings(){
   });
   document.getElementById("cat-add").onclick=()=>{
     const palette=["#0f7cbd","#c2410c","#7c3aed","#0e9f6e","#be185d","#a16207"];
-    settings.categories.push({id:"c-"+uid(), name:"Nueva categoría", color:palette[settings.categories.length%palette.length]});
+    settings.categories.push({id:"c-"+uid(), name:"Nueva categoría", value:"", color:palette[settings.categories.length%palette.length]});
     saveSettings(); renderAll();
     const last=document.getElementById("cn-"+(settings.categories.length-1)); if(last){last.focus(); last.select();}
   };
@@ -475,8 +468,8 @@ function buildCsv(){
   const rows=[["fecha","categoria","valor","origen","inicio","fin","unidades","minutos","nota"]];
   Object.keys(days).sort().forEach(d=>{
     const day=days[d];
-    Object.keys(day.units||{}).forEach(k=>{ const [cat,v]=k.split("|"); const n=day.units[k]; rows.push([d,catById(cat).name,VALUES[v||""],"unidades","","",n,n*15,""]); });
-    (day.entries||[]).forEach(e=>{ const m=(e.end-e.start)/60000; rows.push([d,catById(e.cat).name,VALUES[e.value||""],"cronómetro",hhmm(e.start),hhmm(e.end),(Math.round(m/15*10)/10),Math.round(m),e.note||""]); });
+    Object.keys(day.units||{}).forEach(k=>{ const [cat,v]=k.split("|"); const n=day.units[k]; rows.push([d,catById(cat).name,VALUES[catValue(cat)],"unidades","","",n,n*15,""]); });
+    (day.entries||[]).forEach(e=>{ const m=(e.end-e.start)/60000; rows.push([d,catById(e.cat).name,VALUES[catValue(e.cat)],"cronómetro",hhmm(e.start),hhmm(e.end),(Math.round(m/15*10)/10),Math.round(m),e.note||""]); });
   });
   return rows.map(r=>r.map(v=>{v=String(v);return /[",\n;]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(",")).join("\n");
 }
@@ -493,7 +486,6 @@ function openDialog(id){
   document.getElementById("f-date").value=dateStr(new Date(e.start));
   document.getElementById("f-start").value=hhmm(e.start);
   document.getElementById("f-end").value=hhmm(e.end);
-  document.getElementById("f-value").value=e.value||"";
   document.getElementById("f-note").value=e.note||"";
   document.getElementById("f-err").textContent="";
   try{ dlg.showModal(); }catch(err){ dlg.setAttribute("open",""); }
@@ -509,7 +501,7 @@ document.getElementById("dlg-form").addEventListener("submit",ev=>{
   const end=new Date(base); end.setHours(eh,em,0,0);
   if(end<=start) end.setDate(end.getDate()+1);
   if(end-start>16*3600000){ document.getElementById("f-err").textContent="El bloque dura más de 16 horas. Revisa las horas."; return; }
-  const entry={id:editingId, cat:document.getElementById("f-cat").value, value:document.getElementById("f-value").value, note:document.getElementById("f-note").value.trim(), start:start.getTime(), end:end.getTime()};
+  const entry={id:editingId, cat:document.getElementById("f-cat").value, note:document.getElementById("f-note").value.trim(), start:start.getTime(), end:end.getTime()};
   removeEntry(editingId); addEntry(entry);
   dlg.close(); renderAll();
 });

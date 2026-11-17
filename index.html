@@ -49,8 +49,7 @@
       <strong id="d-label"></strong>
       <button class="btn small" id="d-next" aria-label="Día siguiente">→</button>
     </div>
-    <div class="counter" aria-live="polite"><span class="big num" id="c-units">0</span><span class="lbl" id="c-lbl">unidades · 0 min</span></div>
-    <div class="vsel"><span>Valor de lo que añades:</span><div class="chips" id="vsel" role="group" aria-label="Valor de las unidades que añades"></div></div>
+    <div class="counter" aria-live="polite"><span class="big num" id="c-units">0 min</span><span class="lbl num" id="c-lbl">0 unidades</span></div>
     <div class="cats" id="cats"></div>
     <p class="hint">Cada toque en una categoría suma una unidad de 15 minutos al día elegido. Con «− 1» la quitas. Con «Crono» mides en tiempo real y, al pararlo, se suma a esa categoría.</p>
   </section>
@@ -75,14 +74,6 @@
       <label for="f-start">Inicio<input type="time" id="f-start" required></label>
       <label for="f-end">Fin<input type="time" id="f-end" required></label>
     </div>
-    <label for="f-value">Valor
-      <select id="f-value">
-        <option value="">Sin marcar</option>
-        <option value="alto">Importante</option>
-        <option value="urgente">Urgente</option>
-        <option value="bajo">Prescindible</option>
-      </select>
-    </label>
     <label for="f-note">Nota<input type="text" id="f-note" maxlength="140" placeholder="Opcional"></label>
     <p class="err" id="f-err"></p>
     <div class="row" style="justify-content:space-between">

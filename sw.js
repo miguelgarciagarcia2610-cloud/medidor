@@ -1,6 +1,6 @@
 // Guarda una copia de la app para que abra aunque no haya conexión.
 // Siempre intenta primero la versión de internet, así los cambios llegan enseguida.
-const CACHE = "medidor-v1";
+const CACHE = "medidor-v2";
 const FILES = ["./", "index.html", "styles.css", "app.js", "config.js", "vendor/supabase.js", "manifest.webmanifest", "icons/icon-192.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => { e.waitUntil(self.clients.claim()); });

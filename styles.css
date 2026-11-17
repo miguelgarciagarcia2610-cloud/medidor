@@ -124,7 +124,7 @@ button:disabled{cursor:default;opacity:.4}
 .banner{background:var(--accent-soft);color:var(--ink);border-radius:10px;padding:10px 12px;font-size:13px}
 
 /* Ajustes */
-.catedit{display:grid;grid-template-columns:40px 1fr auto;gap:8px;align-items:center}
+.catedit{display:grid;grid-template-columns:40px 1fr auto auto;gap:8px;align-items:center}
 .catedit input[type=text]{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:7px 10px;width:100%}
 .catedit input[type=color]{width:40px;height:36px;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:2px}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -154,3 +154,11 @@ dialog::backdrop{background:rgba(10,12,20,.45)}
 .hidden{display:none !important}
 .wrap{padding-top:max(20px, env(safe-area-inset-top))}
 .cn{min-width:0;hyphens:auto;overflow-wrap:anywhere}
+.vselect{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:7px 8px}
+.pill.neutro{color:var(--muted);background:var(--bg)}
+.vtag{font-weight:600}
+.vtag.alto{color:var(--good)} .vtag.urgente{color:var(--warn)} .vtag.bajo{color:var(--bad)} .vtag.neutro{color:var(--muted)}
+.counter .big{font-size:36px;color:var(--accent)}
+.catedit{grid-template-areas:"c n v d"}
+.catedit input[type=color]{grid-area:c}.catedit input[type=text]{grid-area:n}.catedit .vselect{grid-area:v}.catedit .btn{grid-area:d}
+@media (max-width:520px){.catedit{grid-template-columns:40px 1fr auto;grid-template-areas:"c n d" ". v v";row-gap:6px}.catedit .vselect{width:100%}}
