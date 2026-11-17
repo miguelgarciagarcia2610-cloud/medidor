@@ -432,7 +432,7 @@ function renderSettings(){
     '<div class="card" style="display:flex;flex-direction:column;gap:10px"><h2>Tu cuenta</h2><p class="hint">'+
     (mode==="cloud" ? "Has entrado como <strong>"+esc(userEmail)+"</strong>. Tus datos se guardan en tu base de datos de Supabase y los verás igual en el móvil y en el ordenador." :
      "Ahora mismo se guarda solo en este navegador, porque falta configurar Supabase en el archivo config.js.")+
-    '</p><div class="row">'+(mode==="cloud"?'<button class="btn" id="logout">Cerrar sesión</button>':'')+'<button class="btn danger" id="wipe">'+(confirmWipe?"Pulsa otra vez para borrarlo todo":"Borrar todos los registros")+'</button></div></div>';
+    '</p><div class="row"><button class="btn primary" id="app-update">Actualizar la app</button>'+(mode==="cloud"?'<button class="btn" id="logout">Cerrar sesión</button>':'')+'<button class="btn danger" id="wipe">'+(confirmWipe?"Pulsa otra vez para borrarlo todo":"Borrar todos los registros")+'</button></div></div>';
   settings.categories.forEach((c,i)=>{
     const n=document.getElementById("cn-"+i), col=document.getElementById("cc-"+i);
     n.addEventListener("change",()=>{ const v=n.value.trim(); if(v){settings.categories[i].name=v; saveSettings(); renderNow(); renderReg();} else n.value=settings.categories[i].name; });
@@ -457,6 +457,7 @@ function renderSettings(){
     catch(e){ box.hidden=false; box.value=csv; box.focus(); box.select(); msg.textContent="Tu navegador no deja copiar automáticamente: selecciona el texto y cópialo."; }
   };
   const lo=document.getElementById("logout"); if(lo) lo.onclick=logout;
+  document.getElementById("app-update").onclick=updateApp;
   document.getElementById("wipe").onclick=()=>{
     if(!confirmWipe){ confirmWipe=true; renderSettings(); setTimeout(()=>{confirmWipe=false; if(currentTab==="ajustes") renderSettings();},5000); return; }
     confirmWipe=false;
@@ -564,6 +565,14 @@ document.getElementById("a-signup").addEventListener("click", async ()=>{
   else authErr.textContent="Cuenta creada. Revisa tu email para confirmarla y luego pulsa «Entrar».";
 });
 
+// Borra la copia guardada de la app y la vuelve a cargar con la última versión publicada
+async function updateApp(){
+  const b=document.getElementById("app-update"); if(b){ b.disabled=true; b.textContent="Actualizando…"; }
+  try{ flushAll(); await Promise.all(Object.values(queues)); }catch(e){}
+  try{ if(window.caches){ const ks=await caches.keys(); await Promise.all(ks.map(k=>caches.delete(k))); } }catch(e){}
+  try{ if(navigator.serviceWorker){ const regs=await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r=>r.update().catch(()=>{}))); } }catch(e){}
+  location.reload();
+}
 async function logout(){
   if(sb) await sb.auth.signOut();
   mode="local"; userId=null; days={}; showAuth();
