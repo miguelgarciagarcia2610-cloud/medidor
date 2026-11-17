@@ -522,6 +522,7 @@ setInterval(tick,1000);
 setInterval(()=>{ if(settings.running && !dlg.open){ renderReg(); if(currentTab!=="ajustes") renderTab(); } },60000);
 
 /* ---------- arranque y acceso ---------- */
+document.getElementById("app-update-top").addEventListener("click",()=>updateApp());
 function showApp(){ document.getElementById("auth").classList.add("hidden"); document.getElementById("app").classList.remove("hidden"); }
 function showAuth(){ document.getElementById("app").classList.add("hidden"); document.getElementById("auth").classList.remove("hidden"); }
 
@@ -567,7 +568,7 @@ document.getElementById("a-signup").addEventListener("click", async ()=>{
 
 // Borra la copia guardada de la app y la vuelve a cargar con la última versión publicada
 async function updateApp(){
-  const b=document.getElementById("app-update"); if(b){ b.disabled=true; b.textContent="Actualizando…"; }
+  ["app-update","app-update-top"].forEach(id=>{ const b=document.getElementById(id); if(b){ b.disabled=true; b.textContent="Actualizando…"; } });
   try{ flushAll(); await Promise.all(Object.values(queues)); }catch(e){}
   try{ if(window.caches){ const ks=await caches.keys(); await Promise.all(ks.map(k=>caches.delete(k))); } }catch(e){}
   try{ if(navigator.serviceWorker){ const regs=await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r=>r.update().catch(()=>{}))); } }catch(e){}

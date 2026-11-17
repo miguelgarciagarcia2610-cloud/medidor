@@ -162,3 +162,5 @@ dialog::backdrop{background:rgba(10,12,20,.45)}
 .catedit{grid-template-areas:"c n v d"}
 .catedit input[type=color]{grid-area:c}.catedit input[type=text]{grid-area:n}.catedit .vselect{grid-area:v}.catedit .btn{grid-area:d}
 @media (max-width:520px){.catedit{grid-template-columns:40px 1fr auto;grid-template-areas:"c n d" ". v v";row-gap:6px}.catedit .vselect{width:100%}}
+.topright{display:flex;align-items:center;gap:10px}
+#app-update-top{padding:4px 10px;font-size:12px}

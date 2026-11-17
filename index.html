@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=5">
 </head>
 <body>
 
@@ -38,10 +38,8 @@
 <div class="wrap hidden" id="app">
   <header class="top">
     <h1>Medidor de tiempo</h1>
-    <span class="status sync" id="status">Cargando…</span>
+    <div class="topright"><span class="status sync" id="status">Cargando…</span><button class="btn small" id="app-update-top" aria-label="Actualizar la app" title="Actualizar la app">↻ Actualizar</button></div>
   </header>
-
-  <section class="now" id="now" aria-live="polite"></section>
 
   <section class="reg">
     <div class="nav">
@@ -53,6 +51,8 @@
     <div class="cats" id="cats"></div>
     <p class="hint">Cada toque en una categoría suma una unidad de 15 minutos al día elegido. Con «− 1» la quitas. Con «Crono» mides en tiempo real y, al pararlo, se suma a esa categoría.</p>
   </section>
+
+  <section class="now" id="now" aria-live="polite"></section>
 
   <nav class="tabs" role="tablist">
     <button class="tab" role="tab" id="tab-hoy" aria-selected="true" data-tab="hoy">Día</button>
@@ -86,8 +86,8 @@
   </form>
 </dialog>
 
-<script src="config.js"></script>
+<script src="config.js?v=5"></script>
 <script src="vendor/supabase.js"></script>
-<script src="app.js"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>
